@@ -7,7 +7,8 @@ import numpy as np
 import imutils
 import pytesseract
 
-img = cv2.imread('yolov5/runs/detect/exp18/crops/license plate/test3.jpg')
+img = cv2.imread('yolov5/runs/detect/exp13/crops/license plate/test3.jpg')
+original = img.copy()
 
 """ rotate_img = imutils.rotate(img, 5)
 plt.imshow(rotate_img)
@@ -21,37 +22,76 @@ resized_up = cv2.resize(img, up_points, interpolation= cv2.INTER_LINEAR) """
 plt.show() """
 
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-plt.imshow(gray, cmap='gray')
-plt.show()
+""" plt.imshow(gray, cmap='gray')
+plt.show() """
 
-(thresh, binary) = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-plt.imshow(binary, cmap='gray')
-plt.show()
+blur = cv2.GaussianBlur(gray, (3,3), 0)
+canny = cv2.Canny(blur, 120, 255, 1)
 
-kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
-thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3)
-plt.imshow(thre_mor, cmap='gray')
-plt.show()
+""" (thresh, binary) = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+ """""" plt.imshow(binary, cmap='gray')
+plt.show() """
 
-cnts = cv2.findContours(binary.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+""" kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
+thre_mor = cv2.morphologyEx(binary, cv2.MORPH_DILATE, kernel3) """
+""" plt.imshow(thre_mor, cmap='gray')
+plt.show() """
+
+""" cnts = cv2.findContours(binary.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 cnts = imutils.grab_contours(cnts)
 
 clone = img.copy()
-cv2.drawContours(clone, cnts, 1, (0, 0, 255), 1)
+cv2.drawContours(clone, cnts, 0, (0, 0, 255), 1)
 clone = imutils.resize(clone, width=400)
 
 cv2.imshow("All Contours", clone)
-cv2.waitKey(0)
+cv2.waitKey(0) """
 
+cnts = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+
+min_area = 100
+image_number = 0
+for c in cnts:
+    area = cv2.contourArea(c)
+    if area > min_area:
+        x,y,w,h = cv2.boundingRect(c)
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0,0,0), 2)
+        ROI = original[y:y+h, x:x+w]
+        cv2.imwrite("ROI_{}.png".format(image_number), ROI)
+        image_number += 1
+
+cv2.imshow('blur', blur)
+cv2.imshow('canny', canny)
+cv2.imshow('image', img)
+cv2.waitKey(0) 
+
+pic = cv2.imread('ROI_2.png')
+
+gray2 = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
+(thresh, binary) = cv2.threshold(gray2, 127, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+cnts = cv2.findContours(binary, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+cnts = imutils.grab_contours(cnts)
+
+original_2 = pic.copy()
+cv2.drawContours(original_2, cnts, 0, (0, 0, 0), 1)
+
+""" cv2.imshow('ori',pic)
+cv2.imshow('gay', gray2)
+cv2.imshow('bi', binary)
+cv2.imshow("All Contours", original_2) """
+""" cv2.waitKey(0) """
+ 
 # Adding custom options
 # pytesseract.pytesseract.tesseract_cmd = r'C:\Users\dewdu\AppData\Local\Tesseract-OCR'
-lang="-l tha --psm 6"
-res = pytesseract.image_to_string(clone,config=lang)
-print(res) 
+""" lang="-l tha --psm 6"
+res = pytesseract.image_to_string(original_2,config=lang)
+print(res)  """
 
 """ reader = easyocr.Reader(['th'])
-result = reader.readtext(binary)
-print(result)  """
+result = reader.readtext(original_2)
+print(result) """
 
 """plt.imshow(cv2.cvtColor(gray, cv2.COLOR_BGR2RGB))
 
